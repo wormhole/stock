@@ -108,7 +108,7 @@ def show(code, train_end, n):
     :return:
     """
     rnn = torch.load(code + ".pkl")
-    device = torch.device("cuda:0")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     rnn.to(device)
     df_train, df_test, df, dates = read_from_csv(code + ".csv", n, train_end)
     if train_end == 0:
@@ -252,7 +252,7 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_set, batch_size=10, shuffle=True)
 
     # 初始化神经网络，优化器，损失函数
-    device = torch.device("cuda:0")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     rnn = RNN(9)
     rnn.to(device)
     optimizer = torch.optim.Adam(rnn.parameters(), lr=LR)
