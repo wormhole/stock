@@ -101,7 +101,7 @@ class RNN(torch.nn.Module):
 |-|-|-|
 |batch_size|批大小|10|
 |series_length|序列长度|30|
-|input_dim|特征维度|4|
+|output_dim|输出维度|4|
 
 >实际取最后一个序列的输出与`label`进行损失计算
 
