@@ -21,7 +21,7 @@ def save_to_csv(code, start_date, end_date):
     df.to_csv(code + ".csv")
 
 
-def read_from_csv(file, n=30, train_end=-500):
+def read_from_csv(file, n, train_end):
     """
     从csv读取股票数据
     :param file: 文件名
@@ -34,6 +34,8 @@ def read_from_csv(file, n=30, train_end=-500):
     df_trade_date = df["trade_date"]
     df = df[["open", "high", "low", "close", "pre_close", "change", "pct_chg", "vol", "amount"]]
     dates = []
+    if train_end == 0:
+        train_end = len(df)
     for date in df_trade_date.tolist():
         dates.append(datetime.datetime.strptime(str(date), "%Y%m%d"))
     df_train, df_test = df[:train_end], df[train_end - n:]
@@ -108,13 +110,13 @@ def show(code, train_end, n):
     rnn = torch.load(code + ".pkl")
     device = torch.device("cuda:0")
     rnn.to(device)
-    df_train, df_test, df, dates = read_from_csv(code + ".csv")
-
+    df_train, df_test, df, dates = read_from_csv(code + ".csv", n, train_end)
+    if train_end == 0:
+        train_end = len(df)
     # 进行验证并画图显示
     train = []
     test = []
 
-    test_index = len(df) + train_end
     df_all_normal, mean, std = standard_scaler(df)
     means = np.array([mean["open"], mean["high"], mean["low"], mean["close"]])
     stds = np.array([std["open"], std["high"], std["low"], std["close"]])
@@ -130,9 +132,9 @@ def show(code, train_end, n):
         y = torch.squeeze(y).detach().cpu().numpy()[-1, :]
         yy = y * stds + means
         # yy = y * (maxs - mins) + mins
-        if i < test_index:
+        if i < train_end:
             train.append(yy)
-        elif (test_index <= i and i < len(df)):
+        elif train_end <= i and i < len(df):
             test.append(yy)
         else:
             print(yy)
@@ -145,7 +147,8 @@ def show(code, train_end, n):
     plt.figure(1)
     plt.subplot(221)
     plt.plot(dates[n:train_end], train[:, 0], color="#ff0000ff", label="训练集")
-    plt.plot(dates[train_end:], test[:, 0], color="#0000ffff", label="测试集")
+    if train_end != len(df):
+        plt.plot(dates[train_end:], test[:, 0], color="#0000ffff", label="测试集")
     plt.plot(dates, df["open"], color="#00ff00ff", label="真实数据", linestyle=":")
     plt.xlabel("时间")
     plt.ylabel("价格")
@@ -154,7 +157,8 @@ def show(code, train_end, n):
 
     plt.subplot(222)
     plt.plot(dates[n:train_end], train[:, 1], color="#ff0000ff", label="训练集")
-    plt.plot(dates[train_end:], test[:, 1], color="#0000ffff", label="测试集")
+    if train_end != len(df):
+        plt.plot(dates[train_end:], test[:, 1], color="#0000ffff", label="测试集")
     plt.plot(dates, df["high"], color="#00ff00ff", label="真实数据", linestyle=":")
     plt.xlabel("时间")
     plt.ylabel("价格")
@@ -163,7 +167,8 @@ def show(code, train_end, n):
 
     plt.subplot(223)
     plt.plot(dates[n:train_end], train[:, 2], color="#ff0000ff", label="训练集")
-    plt.plot(dates[train_end:], test[:, 2], color="#0000ffff", label="测试集")
+    if train_end != len(df):
+        plt.plot(dates[train_end:], test[:, 2], color="#0000ffff", label="测试集")
     plt.plot(dates, df["low"], color="#00ff00ff", label="真实数据", linestyle=":")
     plt.xlabel("时间")
     plt.ylabel("价格")
@@ -172,7 +177,8 @@ def show(code, train_end, n):
 
     plt.subplot(224)
     plt.plot(dates[n:train_end], train[:, 3], color="#ff0000ff", label="训练集")
-    plt.plot(dates[train_end:], test[:, 3], color="#0000ffff", label="测试集")
+    if train_end != len(df):
+        plt.plot(dates[train_end:], test[:, 3], color="#0000ffff", label="测试集")
     plt.plot(dates, df["close"], color="#00ff00ff", label="真实数据", linestyle=":")
     plt.xlabel("时间")
     plt.ylabel("价格")
@@ -225,12 +231,11 @@ class TrainSet(Dataset):
 LR = 0.0001
 # EPOCH大小
 EPOCH = 100
-# 训练集和测试集划分索引
-TRAIN_END = -500
 
 if __name__ == "__main__":
     code = input("请输入股票代码:")
     N = int(input("请输入序列长度:"))
+    TRAIN_END = int(input("训练集长度(0表示默认所有数据):"))
     # 从tushare下载股票历史日k数据
     save_to_csv(code, start_date="", end_date="")
     # 从csv中读取数据
@@ -261,7 +266,7 @@ if __name__ == "__main__":
             ty = ty.to(device)
             output = rnn(tx)
             # 计算损失
-            loss = loss_func(output[:, -1, :], torch.squeeze(ty))
+            loss = loss_func(torch.squeeze(output[:, -1, :]), torch.squeeze(ty))
             # 梯度清零
             optimizer.zero_grad()
             # 反向传播
@@ -272,3 +277,4 @@ if __name__ == "__main__":
         print(step, loss)
 
     torch.save(rnn, code + ".pkl")
+    show(code, TRAIN_END, N)
