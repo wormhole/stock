@@ -150,12 +150,12 @@ code = "600588.SH"
 
 if __name__ == "__main__":
     # 从tushare下载股票历史日k数据
-    save_to_csv(code, start_date="20100101", end_date="")
+    save_to_csv(code, start_date="", end_date="")
     # 从csv中读取数据
     df_train, df_test, df, dates = read_from_csv(code + ".csv", N, TRAIN_END)
     # 将数据标准化或归一化处理
-    # df_train_normal, mean, std = standard_scaler(df_train)
-    df_train_normal, min, max = min_max_scaler(df_train)
+    df_train_normal, mean, std = standard_scaler(df_train)
+    # df_train_normal, min, max = min_max_scaler(df_train)
     # 将数据组装成时间序列
     np_train_normal, np_label_normal = series_data(df_train_normal, N)
     # 将数据转成Tensor对象，并保存到DataLoader里
@@ -198,20 +198,20 @@ if __name__ == "__main__":
     predict_dates = []
 
     test_index = len(df) + TRAIN_END
-    # df_all_normal, mean, std = standard_scaler(df)
-    # means = np.array([mean["open"], mean["high"], mean["low"], mean["close"]])
-    # stds = np.array([std["open"], std["high"], std["low"], std["close"]])
-    df_all_normal, min, max = min_max_scaler(df)
-    mins = np.array([min["open"], min["high"], min["low"], min["close"]])
-    maxs = np.array([max["open"], max["high"], max["low"], max["close"]])
+    df_all_normal, mean, std = standard_scaler(df)
+    means = np.array([mean["open"], mean["high"], mean["low"], mean["close"]])
+    stds = np.array([std["open"], std["high"], std["low"], std["close"]])
+    # df_all_normal, min, max = min_max_scaler(df)
+    # mins = np.array([min["open"], min["high"], min["low"], min["close"]])
+    # maxs = np.array([max["open"], max["high"], max["low"], max["close"]])
     ts_all_normal = torch.Tensor(df_all_normal.values)
     for i in range(N, len(df)):
         x = ts_all_normal[i - N:i].to(device)
         x = torch.unsqueeze(x, dim=0)
         y = rnn(x).to(device)
         y = torch.squeeze(y).detach().cpu().numpy()[-1, :]
-        # yy = y * stds + means
-        yy = y * (maxs - mins) + mins
+        yy = y * stds + means
+        # yy = y * (maxs - mins) + mins
         if i < test_index:
             train.append(yy)
         else:
