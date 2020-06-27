@@ -215,10 +215,7 @@ if __name__ == "__main__":
         elif (test_index <= i and i < len(df)):
             test.append(yy)
         else:
-            print("开盘价:" + yy[0])
-            print("最高价:" + yy[1])
-            print("最低价:" + yy[2])
-            print("收盘价:" + yy[3])
+            print(yy)
 
     train = np.array(train)
     test = np.array(test)
