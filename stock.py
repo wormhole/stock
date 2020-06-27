@@ -146,7 +146,7 @@ TRAIN_END = -500
 
 if __name__ == "__main__":
     code = input("请输入股票代码:")
-    N = input("请输入序列长度:")
+    N = int(input("请输入序列长度:"))
     # 从tushare下载股票历史日k数据
     save_to_csv(code, start_date="", end_date="")
     # 从csv中读取数据
