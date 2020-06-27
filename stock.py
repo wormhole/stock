@@ -137,18 +137,16 @@ class TrainSet(Dataset):
 
 
 # 超参数
-# 时间序列长度
-N = 30
 # 学习率
 LR = 0.0001
 # EPOCH大小
 EPOCH = 100
 # 训练集和测试集划分索引
 TRAIN_END = -500
-# 股票代码
-code = "600588.SH"
 
 if __name__ == "__main__":
+    code = input("请输入股票代码:")
+    N = input("请输入序列长度:")
     # 从tushare下载股票历史日k数据
     save_to_csv(code, start_date="", end_date="")
     # 从csv中读取数据
@@ -205,7 +203,7 @@ if __name__ == "__main__":
     # mins = np.array([min["open"], min["high"], min["low"], min["close"]])
     # maxs = np.array([max["open"], max["high"], max["low"], max["close"]])
     ts_all_normal = torch.Tensor(df_all_normal.values)
-    for i in range(N, len(df)):
+    for i in range(N, len(df) + 1):
         x = ts_all_normal[i - N:i].to(device)
         x = torch.unsqueeze(x, dim=0)
         y = rnn(x).to(device)
@@ -214,8 +212,13 @@ if __name__ == "__main__":
         # yy = y * (maxs - mins) + mins
         if i < test_index:
             train.append(yy)
-        else:
+        elif (test_index <= i and i < len(df)):
             test.append(yy)
+        else:
+            print("开盘价:" + yy[0])
+            print("最高价:" + yy[1])
+            print("最低价:" + yy[2])
+            print("收盘价:" + yy[3])
 
     train = np.array(train)
     test = np.array(test)
