@@ -109,7 +109,7 @@ class RNN(torch.nn.Module):
 略
 
 ## 五、验证
-![predict](image/predict.png)
-选取最高价的局部大图看一下
-![high](image/detail.png)
+![predict](image/predict.png)  
+选取最高价的局部大图看一下  
+![high](image/detail.png)  
 可以看到不管是训练集还是测试集都拟合完美，具体效果如何等待验证，个人感觉中长线趋势还是挺准的，短线偶尔也有一定的误差。
