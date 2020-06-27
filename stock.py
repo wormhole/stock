@@ -97,6 +97,90 @@ def standard_scaler(df):
     return df, mean_map, std_map
 
 
+def show(code, train_end, n):
+    """
+    画图显示，并预测下一个交易日的开盘价，最高价，收盘价，最低价
+    :param code: 股票代码
+    :param train_end: 训练集测试集分割下标
+    :param n: 时间序列
+    :return:
+    """
+    rnn = torch.load(code + ".pkl")
+    device = torch.device("cuda:0")
+    rnn.to(device)
+    df_train, df_test, df, dates = read_from_csv(code + ".csv")
+
+    # 进行验证并画图显示
+    train = []
+    test = []
+
+    test_index = len(df) + train_end
+    df_all_normal, mean, std = standard_scaler(df)
+    means = np.array([mean["open"], mean["high"], mean["low"], mean["close"]])
+    stds = np.array([std["open"], std["high"], std["low"], std["close"]])
+    # df_all_normal, min, max = min_max_scaler(df)
+    # mins = np.array([min["open"], min["high"], min["low"], min["close"]])
+    # maxs = np.array([max["open"], max["high"], max["low"], max["close"]])
+    ts_all_normal = torch.Tensor(df_all_normal.values)
+
+    for i in range(n, len(df) + 1):
+        x = ts_all_normal[i - n:i].to(device)
+        x = torch.unsqueeze(x, dim=0)
+        y = rnn(x).to(device)
+        y = torch.squeeze(y).detach().cpu().numpy()[-1, :]
+        yy = y * stds + means
+        # yy = y * (maxs - mins) + mins
+        if i < test_index:
+            train.append(yy)
+        elif (test_index <= i and i < len(df)):
+            test.append(yy)
+        else:
+            print(yy)
+
+    train = np.array(train)
+    test = np.array(test)
+    plt.rcParams["font.sans-serif"] = ["KaiTi"]
+    plt.rcParams["axes.unicode_minus"] = False
+
+    plt.figure(1)
+    plt.subplot(221)
+    plt.plot(dates[n:train_end], train[:, 0], color="#ff0000ff", label="训练集")
+    plt.plot(dates[train_end:], test[:, 0], color="#0000ffff", label="测试集")
+    plt.plot(dates, df["open"], color="#00ff00ff", label="真实数据", linestyle=":")
+    plt.xlabel("时间")
+    plt.ylabel("价格")
+    plt.title("开盘价")
+    plt.legend()
+
+    plt.subplot(222)
+    plt.plot(dates[n:train_end], train[:, 1], color="#ff0000ff", label="训练集")
+    plt.plot(dates[train_end:], test[:, 1], color="#0000ffff", label="测试集")
+    plt.plot(dates, df["high"], color="#00ff00ff", label="真实数据", linestyle=":")
+    plt.xlabel("时间")
+    plt.ylabel("价格")
+    plt.title("最高价")
+    plt.legend()
+
+    plt.subplot(223)
+    plt.plot(dates[n:train_end], train[:, 2], color="#ff0000ff", label="训练集")
+    plt.plot(dates[train_end:], test[:, 2], color="#0000ffff", label="测试集")
+    plt.plot(dates, df["low"], color="#00ff00ff", label="真实数据", linestyle=":")
+    plt.xlabel("时间")
+    plt.ylabel("价格")
+    plt.title("最低价")
+    plt.legend()
+
+    plt.subplot(224)
+    plt.plot(dates[n:train_end], train[:, 3], color="#ff0000ff", label="训练集")
+    plt.plot(dates[train_end:], test[:, 3], color="#0000ffff", label="测试集")
+    plt.plot(dates, df["close"], color="#00ff00ff", label="真实数据", linestyle=":")
+    plt.xlabel("时间")
+    plt.ylabel("价格")
+    plt.title("收盘价")
+    plt.legend()
+    plt.show()
+
+
 class RNN(torch.nn.Module):
     def __init__(self, input_size):
         """
@@ -188,74 +272,3 @@ if __name__ == "__main__":
         print(step, loss)
 
     torch.save(rnn, code + ".pkl")
-
-    # 进行验证并画图显示
-    train = []
-    test = []
-    predict = []
-    predict_dates = []
-
-    test_index = len(df) + TRAIN_END
-    df_all_normal, mean, std = standard_scaler(df)
-    means = np.array([mean["open"], mean["high"], mean["low"], mean["close"]])
-    stds = np.array([std["open"], std["high"], std["low"], std["close"]])
-    # df_all_normal, min, max = min_max_scaler(df)
-    # mins = np.array([min["open"], min["high"], min["low"], min["close"]])
-    # maxs = np.array([max["open"], max["high"], max["low"], max["close"]])
-    ts_all_normal = torch.Tensor(df_all_normal.values)
-    for i in range(N, len(df) + 1):
-        x = ts_all_normal[i - N:i].to(device)
-        x = torch.unsqueeze(x, dim=0)
-        y = rnn(x).to(device)
-        y = torch.squeeze(y).detach().cpu().numpy()[-1, :]
-        yy = y * stds + means
-        # yy = y * (maxs - mins) + mins
-        if i < test_index:
-            train.append(yy)
-        elif (test_index <= i and i < len(df)):
-            test.append(yy)
-        else:
-            print(yy)
-
-    train = np.array(train)
-    test = np.array(test)
-    plt.rcParams["font.sans-serif"] = ["KaiTi"]
-    plt.rcParams["axes.unicode_minus"] = False
-
-    plt.figure(1)
-    plt.subplot(221)
-    plt.plot(dates[N:TRAIN_END], train[:, 0], color="#ff0000ff", label="训练集")
-    plt.plot(dates[TRAIN_END:], test[:, 0], color="#0000ffff", label="测试集")
-    plt.plot(dates, df["open"], color="#00ff00ff", label="真实数据", linestyle=":")
-    plt.xlabel("时间")
-    plt.ylabel("价格")
-    plt.title("开盘价")
-    plt.legend()
-
-    plt.subplot(222)
-    plt.plot(dates[N:TRAIN_END], train[:, 1], color="#ff0000ff", label="训练集")
-    plt.plot(dates[TRAIN_END:], test[:, 1], color="#0000ffff", label="测试集")
-    plt.plot(dates, df["high"], color="#00ff00ff", label="真实数据", linestyle=":")
-    plt.xlabel("时间")
-    plt.ylabel("价格")
-    plt.title("最高价")
-    plt.legend()
-
-    plt.subplot(223)
-    plt.plot(dates[N:TRAIN_END], train[:, 2], color="#ff0000ff", label="训练集")
-    plt.plot(dates[TRAIN_END:], test[:, 2], color="#0000ffff", label="测试集")
-    plt.plot(dates, df["low"], color="#00ff00ff", label="真实数据", linestyle=":")
-    plt.xlabel("时间")
-    plt.ylabel("价格")
-    plt.title("最低价")
-    plt.legend()
-
-    plt.subplot(224)
-    plt.plot(dates[N:TRAIN_END], train[:, 3], color="#ff0000ff", label="训练集")
-    plt.plot(dates[TRAIN_END:], test[:, 3], color="#0000ffff", label="测试集")
-    plt.plot(dates, df["close"], color="#00ff00ff", label="真实数据", linestyle=":")
-    plt.xlabel("时间")
-    plt.ylabel("价格")
-    plt.title("收盘价")
-    plt.legend()
-    plt.show()
