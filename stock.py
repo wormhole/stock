@@ -228,7 +228,7 @@ class TrainSet(Dataset):
 
 # 超参数
 # 学习率
-LR = 0.0001
+LR = 0.000001
 # EPOCH大小
 EPOCH = 100
 
@@ -249,7 +249,7 @@ if __name__ == "__main__":
     ts_train_normal = torch.Tensor(np_train_normal)
     ts_label_normal = torch.Tensor(np_label_normal)
     train_set = TrainSet(ts_train_normal, ts_label_normal)
-    train_loader = DataLoader(train_set, batch_size=10, shuffle=True)
+    train_loader = DataLoader(train_set, batch_size=10, shuffle=False)
 
     # 初始化神经网络，优化器，损失函数
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
