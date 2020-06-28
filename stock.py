@@ -228,7 +228,7 @@ class TrainSet(Dataset):
 
 # 超参数
 # 学习率
-LR = 0.000001
+LR = 0.00001
 # EPOCH大小
 EPOCH = 100
 
