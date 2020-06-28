@@ -142,40 +142,40 @@ def show(code, train_end, n):
 
     plt.figure(1)
     plt.subplot(221)
-    plt.plot(dates[n:train_end], train[:, 0], color="#ff0000", label="训练集")
+    plt.plot(dates[n:train_end], train[:, 0], color="#ff0000", label="训练集", linewidth="1")
     if train_end != len(df):
-        plt.plot(dates[train_end:], test[:, 0], color="#0000ff", label="测试集")
-    plt.plot(dates, df["open"], color="#00ff00", label="真实数据", linestyle=":")
+        plt.plot(dates[train_end:], test[:, 0], color="#0000ff", label="测试集", linewidth="1")
+    plt.plot(dates, df["open"], color="#00ff00", label="真实数据", linewidth="1")
     plt.xlabel("时间")
     plt.ylabel("价格")
     plt.title("开盘价")
     plt.legend()
 
     plt.subplot(222)
-    plt.plot(dates[n:train_end], train[:, 1], color="#ff0000", label="训练集")
+    plt.plot(dates[n:train_end], train[:, 1], color="#ff0000", label="训练集", linewidth="1")
     if train_end != len(df):
-        plt.plot(dates[train_end:], test[:, 1], color="#0000ff", label="测试集")
-    plt.plot(dates, df["high"], color="#00ff00", label="真实数据", linestyle=":")
+        plt.plot(dates[train_end:], test[:, 1], color="#0000ff", label="测试集", linewidth="1")
+    plt.plot(dates, df["high"], color="#00ff00", label="真实数据", linewidth="1")
     plt.xlabel("时间")
     plt.ylabel("价格")
     plt.title("最高价")
     plt.legend()
 
     plt.subplot(223)
-    plt.plot(dates[n:train_end], train[:, 2], color="#ff0000", label="训练集")
+    plt.plot(dates[n:train_end], train[:, 2], color="#ff0000", label="训练集", linewidth="1")
     if train_end != len(df):
-        plt.plot(dates[train_end:], test[:, 2], color="#0000ff", label="测试集")
-    plt.plot(dates, df["low"], color="#00ff00", label="真实数据", linestyle=":")
+        plt.plot(dates[train_end:], test[:, 2], color="#0000ff", label="测试集", linewidth="1")
+    plt.plot(dates, df["low"], color="#00ff00", label="真实数据", linewidth="1")
     plt.xlabel("时间")
     plt.ylabel("价格")
     plt.title("最低价")
     plt.legend()
 
     plt.subplot(224)
-    plt.plot(dates[n:train_end], train[:, 3], color="#ff0000", label="训练集")
+    plt.plot(dates[n:train_end], train[:, 3], color="#ff0000", label="训练集", linewidth="1")
     if train_end != len(df):
-        plt.plot(dates[train_end:], test[:, 3], color="#0000ff", label="测试集")
-    plt.plot(dates, df["close"], color="#00ff00", label="真实数据", linestyle=":")
+        plt.plot(dates[train_end:], test[:, 3], color="#0000ff", label="测试集", linewidth="1")
+    plt.plot(dates, df["close"], color="#00ff00", label="真实数据", linewidth="1")
     plt.xlabel("时间")
     plt.ylabel("价格")
     plt.title("收盘价")
@@ -224,7 +224,7 @@ class TrainSet(Dataset):
 
 # 超参数
 # 学习率
-LR = 0.001
+LR = 0.0001
 # EPOCH大小
 EPOCH = 100
 
