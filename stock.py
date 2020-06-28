@@ -230,7 +230,7 @@ class TrainSet(Dataset):
 # 学习率
 LR = 0.001
 # EPOCH大小
-EPOCH = 200
+EPOCH = 100
 
 if __name__ == "__main__":
     code = input("请输入股票代码:")
