@@ -228,9 +228,9 @@ class TrainSet(Dataset):
 
 # 超参数
 # 学习率
-LR = 0.00001
+LR = 0.001
 # EPOCH大小
-EPOCH = 100
+EPOCH = 200
 
 if __name__ == "__main__":
     code = input("请输入股票代码:")
@@ -256,6 +256,7 @@ if __name__ == "__main__":
     rnn = RNN(9)
     rnn.to(device)
     optimizer = torch.optim.Adam(rnn.parameters(), lr=LR)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1, last_epoch=-1)
     loss_func = torch.nn.MSELoss()
 
     # 开始训练
@@ -273,6 +274,7 @@ if __name__ == "__main__":
             loss.backward()
             # 更新权重
             optimizer.step()
+        scheduler.step()
         # 打印每个epoch的损失
         print(step, loss)
 
