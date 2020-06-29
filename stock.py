@@ -199,9 +199,9 @@ class RNN(torch.nn.Module):
         self.out = torch.nn.Sequential(
             torch.nn.Linear(64, 32),
             torch.nn.ReLU(),
-            torch.nn.Linear(32, 16),
+            torch.nn.Linear(32, 32),
             torch.nn.ReLU(),
-            torch.nn.Linear(16, 4)
+            torch.nn.Linear(32, 4)
         )
 
     def forward(self, x):
