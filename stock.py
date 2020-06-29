@@ -193,11 +193,15 @@ class RNN(torch.nn.Module):
         self.rnn = torch.nn.LSTM(
             input_size=input_size,
             hidden_size=64,
-            num_layers=1,
+            num_layers=2,
             batch_first=True
         )
         self.out = torch.nn.Sequential(
-            torch.nn.Linear(64, 4)
+            torch.nn.Linear(64, 32),
+            torch.nn.ReLU(),
+            torch.nn.Linear(32, 16),
+            torch.nn.ReLU(),
+            torch.nn.Linear(16, 4)
         )
 
     def forward(self, x):
