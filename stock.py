@@ -192,16 +192,16 @@ class RNN(torch.nn.Module):
         super(RNN, self).__init__()
         self.rnn = torch.nn.LSTM(
             input_size=input_size,
-            hidden_size=64,
+            hidden_size=128,
             num_layers=2,
             batch_first=True
         )
         self.out = torch.nn.Sequential(
-            torch.nn.Linear(64, 32),
+            torch.nn.Linear(128, 64),
             torch.nn.ReLU(),
-            torch.nn.Linear(32, 32),
+            torch.nn.Linear(64, 64),
             torch.nn.ReLU(),
-            torch.nn.Linear(32, 4)
+            torch.nn.Linear(64, 4)
         )
 
     def forward(self, x):
@@ -228,7 +228,7 @@ class TrainSet(Dataset):
 
 # 超参数
 # 学习率
-LR = 0.00001
+LR = 0.0001
 # EPOCH大小
 EPOCH = 100
 
