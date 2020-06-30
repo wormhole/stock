@@ -21,7 +21,7 @@ def save_to_csv(code, start_date, end_date):
     df.to_csv(code + ".csv")
 
 
-def read_from_csv(file, n, train_end):
+def read_from_csv(file, n, train_end, columns):
     """
     从csv读取股票数据
     :param file: 文件名
@@ -32,7 +32,7 @@ def read_from_csv(file, n, train_end):
     df = pd.read_csv(file)
     df = df.sort_values("trade_date")
     df_trade_date = df["trade_date"]
-    df = df[["open", "high", "low", "close", "pre_close", "change", "pct_chg", "vol", "amount"]]
+    df = df[columns]
     dates = []
     if train_end == 0:
         train_end = len(df)
@@ -99,7 +99,7 @@ def standard_scaler(df):
     return df, mean_map, std_map
 
 
-def show(code, train_end, n):
+def show(code, train_end, n, colums):
     """
     画图显示，并预测下一个交易日的开盘价，最高价，收盘价，最低价
     :param code: 股票代码
@@ -110,7 +110,7 @@ def show(code, train_end, n):
     rnn = torch.load(code + ".pkl")
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     rnn.to(device)
-    df_train, df_test, df, dates = read_from_csv(code + ".csv", n, train_end)
+    df_train, df_test, df, dates = read_from_csv(code + ".csv", n, train_end, columns)
     if train_end == 0:
         train_end = len(df)
     # 进行验证并画图显示
@@ -198,9 +198,9 @@ class RNN(torch.nn.Module):
         )
         self.out = torch.nn.Sequential(
             torch.nn.Linear(128, 64),
-            torch.nn.ReLU(),
+            torch.nn.Tanh(),
             torch.nn.Linear(64, 64),
-            torch.nn.ReLU(),
+            torch.nn.Tanh(),
             torch.nn.Linear(64, 4)
         )
 
@@ -230,20 +230,21 @@ class TrainSet(Dataset):
 # 学习率
 LR = 0.0001
 # EPOCH大小
-EPOCH = 100
+EPOCH = 50
 
 if __name__ == "__main__":
     code = input("请输入股票代码:")
-    N = int(input("请输入序列长度:"))
-    TRAIN_END = int(input("训练集长度(0表示默认所有数据):"))
+    n = int(input("请输入序列长度:"))
+    train_end = int(input("训练集长度(0表示默认所有数据):"))
     # 从tushare下载股票历史日k数据
     save_to_csv(code, start_date="", end_date="")
     # 从csv中读取数据
-    df_train, df_test, df, dates = read_from_csv(code + ".csv", N, TRAIN_END)
+    columns = ["open", "high", "low", "close", "pre_close", "change", "pct_chg", "vol", "amount"]
+    df_train, df_test, df, dates = read_from_csv(code + ".csv", n, train_end, columns)
     # 将数据标准化或归一化处理
     df_train_normal, mean, std = standard_scaler(df_train)
     # 将数据组装成时间序列
-    np_train_normal, np_label_normal = series_data(df_train_normal, N)
+    np_train_normal, np_label_normal = series_data(df_train_normal, n)
     # 将数据转成Tensor对象，并保存到DataLoader里
     ts_train_normal = torch.Tensor(np_train_normal)
     ts_label_normal = torch.Tensor(np_label_normal)
@@ -252,10 +253,10 @@ if __name__ == "__main__":
 
     # 初始化神经网络，优化器，损失函数
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    rnn = RNN(9)
+    rnn = RNN(df_train.shape[1])
     rnn.to(device)
     optimizer = torch.optim.Adam(rnn.parameters(), lr=LR)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1, last_epoch=-1)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1, last_epoch=-1)
     loss_func = torch.nn.MSELoss()
 
     # 开始训练
@@ -278,4 +279,4 @@ if __name__ == "__main__":
         print(step, loss)
 
     torch.save(rnn, code + ".pkl")
-    show(code, TRAIN_END, N)
+    show(code, train_end, n, columns)
