@@ -113,6 +113,8 @@ def show(code, train_end, n, columns):
     df_train, df_test, df, dates = read_from_csv(code + ".csv", n, train_end, columns)
     if train_end == 0:
         train_end = len(df)
+    elif train_end < 0:
+        train_end = len(df) + train_end
     # 进行验证并画图显示
     train = []
     test = []
