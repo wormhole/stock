@@ -99,7 +99,7 @@ def standard_scaler(df):
     return df, mean_map, std_map
 
 
-def show(code, train_end, n, colums):
+def show(code, train_end, n, columns):
     """
     画图显示，并预测下一个交易日的开盘价，最高价，收盘价，最低价
     :param code: 股票代码
