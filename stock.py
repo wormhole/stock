@@ -241,7 +241,7 @@ if __name__ == "__main__":
     # 从tushare下载股票历史日k数据
     save_to_csv(code, start_date="", end_date="")
     # 从csv中读取数据
-    columns = ["open", "high", "low", "close", "pre_close", "change", "pct_chg", "vol", "amount"]
+    columns = ["open", "high", "low", "close"]
     df_train, df_test, df, dates = read_from_csv(code + ".csv", n, train_end, columns)
     # 将数据标准化或归一化处理
     df_train_normal, mean, std = standard_scaler(df_train)
