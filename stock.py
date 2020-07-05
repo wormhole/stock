@@ -8,6 +8,17 @@ from matplotlib import pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 
 
+def date_list(n):
+    ds = []
+    y = str(datetime.datetime.now().year)
+    m = str(datetime.datetime.now().month)
+    d = str(datetime.datetime.now().day)
+    dates = pd.date_range(start=y + "-" + m + "-" + d, periods=n, freq="D")
+    for date in dates:
+        ds.append(datetime.datetime.strptime(str(date), "%Y-%m-%d %M:%H:%S"))
+    return ds
+
+
 def save_to_csv(code, start_date, end_date):
     """
     从tushare下载金融数据保存至csv
@@ -99,7 +110,7 @@ def standard_scaler(df):
     return df, mean_map, std_map
 
 
-def show(code, train_end, n, columns):
+def show(code, train_end, n, columns, p):
     """
     画图显示，并预测下一个交易日的开盘价，最高价，收盘价，最低价
     :param code: 股票代码
@@ -118,13 +129,16 @@ def show(code, train_end, n, columns):
     # 进行验证并画图显示
     train = []
     test = []
+    predict = []
+    predict_dates = date_list(p)
 
     df_all_normal, mean, std = standard_scaler(df)
     means = np.array([mean["open"], mean["high"], mean["low"], mean["close"]])
     stds = np.array([std["open"], std["high"], std["low"], std["close"]])
     ts_all_normal = torch.Tensor(df_all_normal.values)
+    predict_normal = df_all_normal[-n:].values.tolist()
 
-    for i in range(n, len(df) + 1):
+    for i in range(n, len(df)):
         x = ts_all_normal[i - n:i].to(device)
         x = torch.unsqueeze(x, dim=0)
         y = rnn(x).to(device)
@@ -132,13 +146,22 @@ def show(code, train_end, n, columns):
         yy = y * stds + means
         if i < train_end:
             train.append(yy)
-        elif train_end <= i and i < len(df):
-            test.append(yy)
         else:
-            print(yy)
+            test.append(yy)
+
+    for i in range(p):
+        ts_predict_normal = torch.Tensor(predict_normal)
+        x = ts_predict_normal[i:i + n].to(device)
+        x = torch.unsqueeze(x, dim=0)
+        y = rnn(x).to(device)
+        y = torch.squeeze(y).detach().cpu().numpy()[-1, :]
+        yy = y * stds + means
+        predict.append(yy)
+        predict_normal.append(y.tolist())
 
     train = np.array(train)
     test = np.array(test)
+    predict = np.array(predict)
     plt.rcParams["font.sans-serif"] = ["KaiTi"]
     plt.rcParams["axes.unicode_minus"] = False
 
@@ -148,6 +171,7 @@ def show(code, train_end, n, columns):
     if train_end != len(df):
         plt.plot(dates[train_end:], test[:, 0], color="#0000ff", label="测试集", linewidth="1")
     plt.plot(dates, df["open"], color="#00ff00", label="真实数据", linewidth="1")
+    plt.plot(predict_dates, predict[:, 0], color="#ffff00", label="预测数据", linewidth="1")
     plt.xlabel("时间")
     plt.ylabel("价格")
     plt.title("开盘价")
@@ -158,6 +182,7 @@ def show(code, train_end, n, columns):
     if train_end != len(df):
         plt.plot(dates[train_end:], test[:, 1], color="#0000ff", label="测试集", linewidth="1")
     plt.plot(dates, df["high"], color="#00ff00", label="真实数据", linewidth="1")
+    plt.plot(predict_dates, predict[:, 1], color="#ffff00", label="预测数据", linewidth="1")
     plt.xlabel("时间")
     plt.ylabel("价格")
     plt.title("最高价")
@@ -168,6 +193,7 @@ def show(code, train_end, n, columns):
     if train_end != len(df):
         plt.plot(dates[train_end:], test[:, 2], color="#0000ff", label="测试集", linewidth="1")
     plt.plot(dates, df["low"], color="#00ff00", label="真实数据", linewidth="1")
+    plt.plot(predict_dates, predict[:, 2], color="#ffff00", label="预测数据", linewidth="1")
     plt.xlabel("时间")
     plt.ylabel("价格")
     plt.title("最低价")
@@ -178,6 +204,7 @@ def show(code, train_end, n, columns):
     if train_end != len(df):
         plt.plot(dates[train_end:], test[:, 3], color="#0000ff", label="测试集", linewidth="1")
     plt.plot(dates, df["close"], color="#00ff00", label="真实数据", linewidth="1")
+    plt.plot(predict_dates, predict[:, 3], color="#ffff00", label="预测数据", linewidth="1")
     plt.xlabel("时间")
     plt.ylabel("价格")
     plt.title("收盘价")
@@ -238,6 +265,7 @@ if __name__ == "__main__":
     code = input("请输入股票代码:")
     n = int(input("请输入序列长度:"))
     train_end = int(input("训练集长度(0表示默认所有数据):"))
+    p = int(input("请输入预测天数:"))
     # 从tushare下载股票历史日k数据
     save_to_csv(code, start_date="", end_date="")
     # 从csv中读取数据
@@ -281,4 +309,4 @@ if __name__ == "__main__":
         print(step, loss)
 
     torch.save(rnn, code + ".pkl")
-    show(code, train_end, n, columns)
+    show(code, train_end, n, columns, p)
